@@ -1,0 +1,48 @@
+﻿@page "/"
+@page "/catfact"
+@inject IHttpClientFactory ClientFactory
+@inject IFactService factService
+@inject IJSRuntime JSRuntime
+
+<h3>Here is some interesting fact about cats</h3>
+
+@if (getCatFactError)
+{
+    <p>Unable to connect to API</p>
+}
+else
+{
+    <p>Fact: @fact.Message</p>
+    <p>Number of characters: @fact.Length</p>
+
+    <button class="btn btn-primary" @onclick="LoadNextFact">Get another fact</button>
+    <button class="btn btn-secondary" @onclick="CreateLocalTextFile">Create local text file</button>
+}
+
+@code {
+    //Fact object for storing data
+    Fact fact = new Fact();
+    private bool getCatFactError;
+
+    //Fetch data once initialized
+    protected override async Task OnInitializedAsync()
+    {
+        fact = await factService.GetFact();
+        getCatFactError = factService.GetFactError;
+    }
+
+    //Method for click event to fetch another portion of data
+    private async Task LoadNextFact()
+    {
+        fact = await factService.GetFact();
+    }
+
+    //Method responsible for creating new text file
+    private async void CreateLocalTextFile()
+    {
+        string content = $"Fact: {fact.Message}, length: {fact.Length}";
+        string fileName = "facts.txt";
+
+        await JSRuntime.InvokeAsync<object>("saveFile", fileName, content);
+    }
+}
